@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "Bmp.h"
+/*
+para unir la imagen crear una matriz de tamaño:
+image width x image height e irla rellenando con las partres de la imagen de los workers
+*/
+
+
+int main(int argc, char *argv[]) {
+
+
+
+    //Crear en el main un execl de broker que reciba la cantidad de workers a crear
+    int cantidad_workers = atoi(argv[1]);
+    int pipe_fd[cantidad_workers][2];
+
+    int cantidad_filtros;
+    float factor_saturacion;
+    float umbral_binarizacion;
+
+    // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
+    read(STDIN_FILENO, &cantidad_filtros, sizeof(cantidad_filtros));
+    read(STDIN_FILENO, &factor_saturacion, sizeof(factor_saturacion));
+    read(STDIN_FILENO, &umbral_binarizacion, sizeof(umbral_binarizacion));
+
+    // Crear pipes y procesos workers
+    for (int i = 0; i < cantidad_workers; i++) {
+        if (pipe(pipe_fd[i]) == -1) {
+            perror("pipe");
+            exit(1);
+        }
+        create_worker(pipe_fd[i]);
+
+        close(pipe_fd[i][0]); // Cerrar el extremo de lectura del pipe
+
+        // Escribir los parámetros al pipe
+        write(pipe_fd[i][1], &cantidad_filtros, sizeof(cantidad_filtros));
+        write(pipe_fd[i][1], &factor_saturacion, sizeof(factor_saturacion));
+        write(pipe_fd[i][1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+        close(pipe_fd[i][1]); // Cerrar el extremo de escritura del pipe
+    }
+
+
+    // Esperar a que todos los workers terminen y recoger resultados
+    for (int i = 0; i < cantidad_workers; i++) {
+        wait(NULL);
+    }
+
+    BMPImage** results[cantidad_workers];
+    for (int i = 0; i < cantidad_workers; i++) {
+        read(pipe_fd[i][0], results[i], sizeof(results[i]));
+        close(pipe_fd[i][0]);
+    }
+
+    // Imprimir los resultados
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        printf("Suma de la columna %d: %d\n", i, results[i]);
+    }
+
+    return 0;
+}

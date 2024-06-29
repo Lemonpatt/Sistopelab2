@@ -16,6 +16,20 @@ int main(int argc, char *argv[]) {
     int opt;
     int cantidad_imagenes = 0;
 
+    // Creacion del worker ___________________________________________
+    int pipe_fd[2];
+
+    if (pipe(pipe_fd) == -1) {
+        perror("pipe");
+        exit(1);
+    }
+
+    create_worker(pipe_fd);
+
+    close(pipe_fd[0]); // Cerrar el extremo de lectura del pipe
+    // Creacion del worker ___________________________________________
+
+
     // Procesar las opciones de línea de comandos
     while ((opt = getopt(argc, argv, "N:f:p:u:v:C:R:W:")) != -1) {
         switch (opt) {
@@ -177,6 +191,17 @@ int main(int argc, char *argv[]) {
     printf("Umbral para clasificación: %f\n", umbral_clasificacion);
     printf("Nombre de la carpeta resultante con las imágenes procesadas: %s\n", nombre_carpeta);
     printf("Nombre del archivo CSV con las clasificaciones resultantes: %s\n", nombre_archivo_csv);
+
+
+    //Escribimos los parametros al pipe______________________________________________________
+    write(pipe_fd[1], &cantidad_imagenes, sizeof(int));
+    write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
+    write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
+    write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+    close(pipe_fd[1]);   // Cerrar el extremo de escritura del pipe 
+    //Escribimos los parametros al pipe______________________________________________________
+
+
 
 
     //Creamos la carpeta con los resultados y el archivo csv

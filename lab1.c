@@ -16,19 +16,6 @@ int main(int argc, char *argv[]) {
     int opt;
     int cantidad_imagenes = 0;
 
-    // Creacion del worker ___________________________________________
-    int pipe_fd[2];
-
-    if (pipe(pipe_fd) == -1) {
-        perror("pipe");
-        exit(1);
-    }
-
-    create_worker(pipe_fd);
-
-    close(pipe_fd[0]); // Cerrar el extremo de lectura del pipe
-    // Creacion del worker ___________________________________________
-
 
     // Procesar las opciones de línea de comandos
     while ((opt = getopt(argc, argv, "N:f:p:u:v:C:R:W:")) != -1) {
@@ -86,7 +73,7 @@ int main(int argc, char *argv[]) {
             case 'W':
                 cantidad_workers = atoi(optarg);
                 if (cantidad_workers < 1) {
-                    fprintf(stderr, "La cantidad de workers debe ser mayor que 0.\n");
+                    fprintf(stderr, "La cantidad de workers debe ser 1 o más.\n");
                     exit(EXIT_FAILURE);
                 }
                 break;
@@ -193,23 +180,38 @@ int main(int argc, char *argv[]) {
     printf("Nombre del archivo CSV con las clasificaciones resultantes: %s\n", nombre_archivo_csv);
 
 
-    //Escribimos los parametros al pipe______________________________________________________
-    write(pipe_fd[1], &cantidad_imagenes, sizeof(int));
+
+    // Creacion del broker ___________________________________________
+    int pipe_fd[2];
+
+    if (pipe(pipe_fd) == -1) {
+        perror("pipe");
+        exit(1);
+    }
+
+    create_broker(pipe_fd, cantidad_workers);
+
+    close(pipe_fd[0]); // Cerrar el extremo de lectura del pipe
+    // Creacion del broker ___________________________________________
+
+    //Escribimos los parametros a el broker en el pipe______________________________________________________
+    write(pipe_fd[1], &cantidad_imagenes, sizeof(cantidad_imagenes));
     write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
     write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
     write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
     close(pipe_fd[1]);   // Cerrar el extremo de escritura del pipe 
-    //Escribimos los parametros al pipe______________________________________________________
+    //Escribimos los parametros a el broker en el pipe______________________________________________________
 
+    //A continuacion se debería hacer la carpeta y el csv, hacer la prueba e imprimir las imagenes desde los resultados del broker,
+    // read foto binarizada, read foto gris, read foto saturada, dependiendo de la cantidad de filtros y hacer clasificacion
 
-
-
+        /*
     //Creamos la carpeta con los resultados y el archivo csv
     make_folder(nombre_carpeta);
     make_csv(nombre_archivo_csv, umbral_clasificacion);
 
 
-
+    
     int i = 0;
     FILE *csv = NULL;
     int resultadoNB;
@@ -287,5 +289,5 @@ int main(int argc, char *argv[]) {
         i++;
 
     }
-    return 0;
+    return 0;*/
 }

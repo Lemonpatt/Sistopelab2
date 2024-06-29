@@ -1,14 +1,19 @@
 #include "fbroker.h"
 
 //test
-void create_worker(int pipe_fd[2]) {
+void create_broker(int pipe_fd[2], int cantidad_workers) {
     if (fork() == 0) {
         close(pipe_fd[1]); // Cerrar el extremo de escritura del pipe
 
         dup2(pipe_fd[0], STDIN_FILENO); // Redirigir stdin para leer desde el pipe
         close(pipe_fd[0]);
 
-        execl("./worker", "worker", NULL); // Ejecutar el worker
+        //Pasamos la cantidad de trabajadores a un string para pasarlo por execl
+        char cantidad_workers_str[100];
+        snprintf(cantidad_workers_str, sizeof(cantidad_workers_str), "%d", cantidad_workers);
+
+
+        execl("./broker", "broker", cantidad_workers_str, NULL); // Ejecutar el worker
         perror("execl");
         exit(1);
     }

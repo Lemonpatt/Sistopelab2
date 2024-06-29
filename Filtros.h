@@ -1,4 +1,4 @@
-#include"Bmp.h"
+#include"fbroker.h"
 
 BMPImage* saturate_bmp(BMPImage* image, float factor);
 

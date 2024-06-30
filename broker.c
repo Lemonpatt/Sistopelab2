@@ -21,16 +21,18 @@ int main(int argc, char *argv[]) {
     double factor_saturacion;
     double umbral_binarizacion;
     char * nombres_imagenes[100];
+    BMPImage* image;
     // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
     read(STDIN_FILENO, &cantidad_imagenes, sizeof(cantidad_filtros));
     read(STDIN_FILENO, &cantidad_filtros, sizeof(cantidad_filtros));
     read(STDIN_FILENO, &factor_saturacion, sizeof(factor_saturacion));
     read(STDIN_FILENO, &umbral_binarizacion, sizeof(umbral_binarizacion));
     printf("cantidad de filtros es %f", factor_saturacion);
-
-    char nombre_imagen[100];
-    read(STDIN_FILENO, nombre_imagen, sizeof(nombre_imagen));
-    printf("nombre primera imagen %s", nombre_imagen);
+    for (int i = 0; cantidad_imagenes > i; i++){
+        image = (BMPImage*)malloc(sizeof(BMPImage));
+        read(STDIN_FILENO, image, sizeof(BMPImage));
+        printf("la resolucion de la imagen es %d por %d\n", image->height, image->width);
+    }
     // Crear pipes y procesos workers
     /*for (int i = 0; i < cantidad_workers; i++) {
         if (pipe(pipe_fd[i]) == -1) {

@@ -7,8 +7,8 @@ int main(int argc, char *argv[]) {
     
     int columna_inicial, num_columnas;
     
-    read(STDIN_FILENO, &columna_inicial, sizeof(columna_inicial))
-    read(STDIN_FILENO, &num_columnas, sizeof(num_columnas))
+    read(STDIN_FILENO, &columna_inicial, sizeof(columna_inicial));
+    read(STDIN_FILENO, &num_columnas, sizeof(num_columnas));
     /* ej
     columna inicial 0
     n colum 10

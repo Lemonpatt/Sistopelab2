@@ -216,6 +216,25 @@ int main(int argc, char *argv[]) {
     close(pipe_fd[1]);   // Cerrar el extremo de escritura del pipe 
     //Escribimos los parametros a el broker en el pipe______________________________________________________
 
+
+
+    for (int w = 0; cantidad_workers > w; w++){
+        // Se crea un nuevo proceso hijo
+        pid_t pid = fork();
+        if (pid == -1) {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid == 0) {
+            // Se ejecuta el worker
+            char *args[] = {"./worker", NULL};
+            execvp(args[0], args);
+            perror("execvp");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     //A continuacion se debería hacer la carpeta y el csv, hacer la prueba e imprimir las imagenes desde los resultados del broker,
     // read foto binarizada, read foto gris, read foto saturada, dependiendo de la cantidad de filtros y hacer clasificacion
 

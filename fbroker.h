@@ -4,6 +4,6 @@
 #include "Bmp.h"
 #include "fworker.h"
 
-void create_broker(int pipe_fd[2]);
+void create_broker(int pipe_fd[2], int cantidad_workers);
 
 void reconstruct_image(BMPImage* original_image, BMPImage** results, int num_workers);

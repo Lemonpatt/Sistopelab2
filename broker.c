@@ -17,16 +17,20 @@ int main(int argc, char *argv[]) {
     int cantidad_workers = atoi(argv[1]);
     int pipe_fd[cantidad_workers][2];
 
-    int cantidad_imagenes, cantidad_filtros;
-    float factor_saturacion;
-    float umbral_binarizacion;
-
+    int cantidad_imagenes, cantidad_filtros, len;
+    double factor_saturacion;
+    double umbral_binarizacion;
+    char * nombres_imagenes[100];
     // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
     read(STDIN_FILENO, &cantidad_imagenes, sizeof(cantidad_filtros));
     read(STDIN_FILENO, &cantidad_filtros, sizeof(cantidad_filtros));
     read(STDIN_FILENO, &factor_saturacion, sizeof(factor_saturacion));
     read(STDIN_FILENO, &umbral_binarizacion, sizeof(umbral_binarizacion));
-    printf("cantidad de filtros es %d", cantidad_filtros);
+    printf("cantidad de filtros es %f", factor_saturacion);
+
+    char nombre_imagen[100];
+    read(STDIN_FILENO, nombre_imagen, sizeof(nombre_imagen));
+    printf("nombre primera imagen %s", nombre_imagen);
     // Crear pipes y procesos workers
     /*for (int i = 0; i < cantidad_workers; i++) {
         if (pipe(pipe_fd[i]) == -1) {
@@ -59,5 +63,5 @@ int main(int argc, char *argv[]) {
     // Reconstruir imagen, se debe recibir basado en la cantidad de filtros cuantas veces se reconstruye la imagen
 
 
-    return 0;
+    return 0; */
 }

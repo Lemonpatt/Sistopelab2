@@ -199,6 +199,19 @@ int main(int argc, char *argv[]) {
     write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
     write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
     write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+    int i = 0;
+    char buffer[100];
+    while (cantidad_imagenes > i){
+        char nombre_imagen[400];
+        if (i != cantidad_imagenes-1){
+            sprintf(nombre_imagen, "%s-", nombre_imagenes[i]);
+        }
+        else {
+            sprintf(nombre_imagen, "%s", nombre_imagenes[i]);
+        }
+        write(pipe_fd[1], nombre_imagen, strlen(nombre_imagen));
+        i++;
+    }
     close(pipe_fd[1]);   // Cerrar el extremo de escritura del pipe 
     //Escribimos los parametros a el broker en el pipe______________________________________________________
 
@@ -288,6 +301,6 @@ int main(int argc, char *argv[]) {
         //Se aumenta el contador
         i++;
 
-    }
-    return 0;*/
+    }*/
+    return 0;
 }

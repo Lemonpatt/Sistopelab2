@@ -199,8 +199,8 @@ int main(int argc, char *argv[]) {
     write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
     write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
     write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+    char nombre_imagen[400];
     for (int i = 0; cantidad_imagenes > i; i++){
-        char nombre_imagen[400];
         sprintf(nombre_imagen, "%s.bmp", nombre_imagenes[i]);
         
         printf("Imagen siendo procesada: %s\n", nombre_imagen);
@@ -229,6 +229,13 @@ int main(int argc, char *argv[]) {
         if (pid == 0) {
             // Se ejecuta el worker
             char *args[] = {"./worker", NULL};
+            execvp(args[0], args);
+            perror("execvp");
+            exit(EXIT_FAILURE);
+
+            // Se lee la imagen para el worker actual
+
+            char *args[] = {"./worker", nombre_imagen, NULL};
             execvp(args[0], args);
             perror("execvp");
             exit(EXIT_FAILURE);

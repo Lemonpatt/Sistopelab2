@@ -23,24 +23,34 @@ void create_worker(int pipe_fdw[2], int id_worker) {
     }
 }
 
-RGBPixel* get_worker_image_section(BMPImage* image, RGBPixel* section_data, int id_worker, int cantidad_workers) {
+BMPImage* get_worker_image_section(BMPImage* image, int id_worker, int cantidad_workers) {
     int total_columns = image->width;
     int columns_per_worker = total_columns / cantidad_workers;
-    int start_column = id_worker-1 * columns_per_worker;
+    int start_column = (id_worker-1) * columns_per_worker;
     int end_column = (id_worker == cantidad_workers) ? total_columns : start_column + columns_per_worker;
 
     int num_columns = end_column - start_column;
 
-    if (!section_data) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
 
+    BMPImage* new_image = (BMPImage*)malloc(sizeof(BMPImage));
+    new_image->width = image->width;
+    new_image->height = image->height;
+    new_image->data[image->width * image->height];
+
+    printf("DEBE SER LA MISMA WIDTH PERO PASADA A COLUMNAS: %d \n", num_columns);
     // Copy the relevant data from the original image to the section
-    for(int col = start_column; col < end_column; col++){
-        for (int row = 0; row < image->height; row++) {
-            section_data[row * (col-start_column)] = image->data[(row + start_column) * col];
+    for (int y = 0; y < image->height; y++) {
+        for (int x = 0; x < image->width; x++) {
+            RGBPixel pixel = image->data[y * image->width + x];
+            unsigned char pixelGrey = pixel.r * 0.3 + pixel.g * 0.59 + pixel.b* 0.11;
+            pixel.r = (unsigned char)(pixelGrey);
+            pixel.g = (unsigned char)(pixelGrey);
+            pixel.b = (unsigned char)(pixelGrey);
+            new_image->data[y * image->width + x] = pixel;
+
         }
+
     }
-    return section_data;
+    printf("Start column: %d, End column: %d\n", start_column, end_column);
+    return new_image;
 }

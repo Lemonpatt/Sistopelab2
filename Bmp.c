@@ -71,7 +71,13 @@ void write_bmp(const char* filename, BMPImage* image){
     info_header.height = image->height;
     info_header.planes = 1;
     info_header.bit_count = 24; // está fijado en 24 en este ejemplo pero puede ser 1, 4, 8, 16, 24 o 32
-    info_header.size_image = image->width * image->height * sizeof(RGBPixel);
+    info_header.compression = 0;
+    info_header.size_image = 0;
+    info_header.x_pixels_per_meter = 0;
+    info_header.y_pixels_per_meter = 0;
+    info_header.colors_used = 0;
+    info_header.colors_important = 0;
+    info_header.size_image = 0;
 
     BMPHeader header;
     header.type = 0x4D42;

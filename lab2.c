@@ -200,6 +200,7 @@ int main(int argc, char *argv[]) {
     write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
     write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
     write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+
     for (int i = 0; cantidad_imagenes > i; i++){
         char nombre_imagen[400];
         sprintf(nombre_imagen, "%s.bmp", nombre_imagenes[i]);
@@ -211,10 +212,24 @@ int main(int argc, char *argv[]) {
         if (!image) {
             return 1;
         }
-        write(pipe_fd[1], image, sizeof(BMPImage));
+        // First, send the width and height
+        write(pipe_fd[1], &image->width, sizeof(int));
+        write(pipe_fd[1], &image->height, sizeof(int));
+        //write_bmp("fotoOriginal.bmp", image);
+        for (int y = 0; y < image->height; y++) {
+            for (int x = 0; x < image->width; x++) {
+                RGBPixel pixel = image->data[y * image->width + x];
+                write(pipe_fd[1], &pixel.r, sizeof(unsigned char));
+                write(pipe_fd[1], &pixel.g, sizeof(unsigned char));
+                write(pipe_fd[1], &pixel.b, sizeof(unsigned char));
+                //printf("IMAGEN: %s. MAIN pixel %dx%d, r: %d g: %d, b: %d\n", nombre_imagen, x, y, pixel.r, pixel.g, pixel.b);
+            }
+        }
+        //close(pipe_fd[1]); //FUNCIONO LA PRIMERA IMAGEN!!
         free_bmp(image);
-    }
-    close(pipe_fd[1]);   // Cerrar el extremo de escritura del pipe 
+    }  
+    close(pipe_fd[1]);
+ // Cerrar el extremo de escritura del pipe 
     //Escribimos los parametros a el broker en el pipe______________________________________________________
 
 

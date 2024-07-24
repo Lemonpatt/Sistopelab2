@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     double factor_saturacion;
     double umbral_binarizacion;
     BMPImage* image;
-
+    close(id_envio);
     image = (BMPImage*)malloc(sizeof(BMPImage));
 
     char nombre_imagen[400];
@@ -22,29 +22,25 @@ int main(int argc, char *argv[]) {
     read(id_lectura, &cantidad_filtros, sizeof(cantidad_filtros));
     read(id_lectura, &factor_saturacion, sizeof(factor_saturacion));
     read(id_lectura, &umbral_binarizacion, sizeof(umbral_binarizacion));
-    read(id_lectura, image, sizeof(BMPImage));
+
     
-    int total_columns = image->width;
-    int columns_per_worker = total_columns / cantidad_workers;
-    int start_column = id_worker-1 * columns_per_worker;
-    int end_column = (id_worker == cantidad_workers) ? total_columns - start_column : start_column + columns_per_worker;
-
-    int num_columns = end_column - start_column;
-
-    RGBPixel *section_data = (RGBPixel *)malloc(image->height * num_columns * sizeof(RGBPixel));
-
-    get_worker_image_section(image, section_data, id_worker, cantidad_workers);
-
-    printf("ID WORKER: %d \n Cantidad de workers son %d\n", id_worker, cantidad_workers);
+    read(id_lectura, image, sizeof(image));
+    
+    close(id_lectura);
+    printf("image dimensions: %dx%d \n", image->width, image->height);
+    write_bmp("testWORKER.bmp", image);
+    free_bmp(image);
+    //BMPImage* new_image = get_worker_image_section(image, id_worker, cantidad_workers);
+/*
     
     char *nombre_carpeta = "test";
     make_folder(nombre_carpeta);
 
     sprintf(nombre_imagen, "%s/a_Saturated.bmp", nombre_carpeta);
         //Aplicamos filtro de saturacion primero
-        BMPImage* new_image = saturate_bmp(image, factor_saturacion);
-        write_bmp(nombre_imagen, new_image);
-    /* ej
+        BMPImage* new_image_filtro = saturate_bmp(new_image, factor_saturacion);
+        write_bmp(nombre_imagen, new_image_filtro);
+     ej
     columna inicial 0
     n colum 10
     columna final = columna inicial + n colum - 1 = 9

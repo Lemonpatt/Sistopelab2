@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "fbroker.h"
+#include "Filtros.h"
 /*
 para unir la imagen crear una matriz de tamaño:
 image width x image height e irla rellenando con las partres de la imagen de los workers
@@ -23,19 +23,27 @@ int main(int argc, char *argv[]) {
     double factor_saturacion;
     double umbral_binarizacion;
     char * nombres_imagenes[100];
-    BMPImage* image;
-   
-
+    RGBPixel pixel;
+    close(id_envio);
     // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
     read(id_lectura, &cantidad_imagenes, sizeof(cantidad_imagenes));
     read(id_lectura, &cantidad_filtros, sizeof(cantidad_filtros));
     read(id_lectura, &factor_saturacion, sizeof(factor_saturacion));
     read(id_lectura, &umbral_binarizacion, sizeof(umbral_binarizacion));
-    printf("factor de saturacion es: %f", factor_saturacion);
-    for (int i = 0; cantidad_imagenes > i; i++){
 
-        image = (BMPImage*)malloc(sizeof(BMPImage));
-        read(id_lectura, image, sizeof(BMPImage));
+        BMPImage* image = (BMPImage*)malloc(sizeof(BMPImage));
+        
+        read(id_lectura, &image->width, sizeof(int));
+        read(id_lectura, &image->height, sizeof(int));
+        image->data = (RGBPixel*)malloc(sizeof(RGBPixel) * image->width * image->height);
+        for (int y = 0; y < image->height; y++) {
+            for (int x = 0; x < image->width; x++) {
+                read(id_lectura, &pixel.r, sizeof(unsigned char));
+                read(id_lectura, &pixel.g, sizeof(unsigned char));
+                read(id_lectura, &pixel.b, sizeof(unsigned char));
+                image->data[y * image->width + x] = pixel;
+            }
+        }
 
         // Crear pipes y procesos workers
         for (int j = 0; j < cantidad_workers; j++) {
@@ -53,18 +61,24 @@ int main(int argc, char *argv[]) {
             write(pipe_fdw[1], &cantidad_filtros, sizeof(cantidad_filtros));
             write(pipe_fdw[1], &factor_saturacion, sizeof(factor_saturacion));
             write(pipe_fdw[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
-            write(pipe_fdw[1], image, sizeof(BMPImage));
-            close(pipe_fdw[1]);
+
+            
+            write(pipe_fdw[1], image, sizeof(image)); 
             
         }
-    }
+        close(pipe_fdw[1]);
+        write_bmp("testBROKER.bmp", image);
+        BMPImage* new_image = saturate_bmp(image, factor_saturacion);
+        write_bmp("testBROKER_Saturado.bmp", new_image);
+        free_bmp(image);
+        // Esperar a que todos los workers terminen y recoger resultados
+        for (int i = 0; i < cantidad_workers; i++) {
+            wait(NULL);
+        }
+    close(id_lectura);
 
 /*
 
-    // Esperar a que todos los workers terminen y recoger resultados
-    for (int i = 0; i < cantidad_workers; i++) {
-        wait(NULL);
-    }
 
     BMPImage** results[cantidad_workers];
     for (int i = 0; i < cantidad_workers; i++) {
@@ -74,6 +88,6 @@ int main(int argc, char *argv[]) {
 
     // Reconstruir imagen, se debe recibir basado en la cantidad de filtros cuantas veces se reconstruye la imagen
 
-
-    return 0; */
+*/
+    return 0; 
 }

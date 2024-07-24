@@ -3,17 +3,23 @@
 //test
 void create_broker(int pipe_fd[2], int cantidad_workers) {
     if (fork() == 0) {
-        close(pipe_fd[1]); // Cerrar el extremo de escritura del pipe
-
-        dup2(pipe_fd[0], STDIN_FILENO); // Redirigir stdin para leer desde el pipe
+        
+        int envio = dup(pipe_fd[1]);
+        close(pipe_fd[1]);
+        int lectura = dup(pipe_fd[0]); // Redirigir stdin para leer desde el pipe
         close(pipe_fd[0]);
 
         //Pasamos la cantidad de trabajadores a un string para pasarlo por execl
         char cantidad_workers_str[100];
         snprintf(cantidad_workers_str, sizeof(cantidad_workers_str), "%d", cantidad_workers);
 
+        char num_envio[100];
+        snprintf(num_envio, sizeof(num_envio), "%d", envio);
+        char num_lectura[100];
+        snprintf(num_lectura, sizeof(num_lectura), "%d", lectura);
 
-        execl("./broker", "broker", cantidad_workers_str, NULL); // Ejecutar el worker
+
+        execl("./broker", "broker", cantidad_workers_str, num_envio, num_lectura, NULL); // Ejecutar el worker
         perror("execl");
         exit(1);
     }

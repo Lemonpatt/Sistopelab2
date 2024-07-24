@@ -15,41 +15,51 @@ int main(int argc, char *argv[]) {
 
     //Crear en el main un execl de broker que reciba la cantidad de workers a crear
     int cantidad_workers = atoi(argv[1]);
-    int pipe_fd[cantidad_workers][2];
+    int id_envio = atoi(argv[2]);
+    int id_lectura = atoi(argv[3]);
+    int pipe_fdw[2];
 
     int cantidad_imagenes, cantidad_filtros, len;
     double factor_saturacion;
     double umbral_binarizacion;
     char * nombres_imagenes[100];
     BMPImage* image;
+   
+
     // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
-    read(STDIN_FILENO, &cantidad_imagenes, sizeof(cantidad_filtros));
-    read(STDIN_FILENO, &cantidad_filtros, sizeof(cantidad_filtros));
-    read(STDIN_FILENO, &factor_saturacion, sizeof(factor_saturacion));
-    read(STDIN_FILENO, &umbral_binarizacion, sizeof(umbral_binarizacion));
-    printf("cantidad de filtros es %f", factor_saturacion);
+    read(id_lectura, &cantidad_imagenes, sizeof(cantidad_imagenes));
+    read(id_lectura, &cantidad_filtros, sizeof(cantidad_filtros));
+    read(id_lectura, &factor_saturacion, sizeof(factor_saturacion));
+    read(id_lectura, &umbral_binarizacion, sizeof(umbral_binarizacion));
+    printf("factor de saturacion es: %f", factor_saturacion);
     for (int i = 0; cantidad_imagenes > i; i++){
+
         image = (BMPImage*)malloc(sizeof(BMPImage));
-        read(STDIN_FILENO, image, sizeof(BMPImage));
-        printf("la resolucion de la imagen es %d por %d\n", image->height, image->width);
-    }
-    // Crear pipes y procesos workers
-    /*for (int i = 0; i < cantidad_workers; i++) {
-        if (pipe(pipe_fd[i]) == -1) {
-            perror("pipe");
-            exit(1);
+        read(id_lectura, image, sizeof(BMPImage));
+
+        // Crear pipes y procesos workers
+        for (int j = 0; j < cantidad_workers; j++) {
+            
+            if (pipe(pipe_fdw) == -1) {
+                perror("pipe");
+                exit(1);
+            }
+            create_worker(pipe_fdw, j+1);
+
+            close(pipe_fdw[0]); // Cerrar el extremo de lectura del pipe
+
+            // Escribir los parámetros al pipe
+            write(pipe_fdw[1], &cantidad_workers, sizeof(cantidad_workers));
+            write(pipe_fdw[1], &cantidad_filtros, sizeof(cantidad_filtros));
+            write(pipe_fdw[1], &factor_saturacion, sizeof(factor_saturacion));
+            write(pipe_fdw[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+            write(pipe_fdw[1], image, sizeof(BMPImage));
+            close(pipe_fdw[1]);
+            
         }
-        create_worker(pipe_fd[i]);
-
-        close(pipe_fd[i][0]); // Cerrar el extremo de lectura del pipe
-
-        // Escribir los parámetros al pipe
-        write(pipe_fd[i][1], &cantidad_filtros, sizeof(cantidad_filtros));
-        write(pipe_fd[i][1], &factor_saturacion, sizeof(factor_saturacion));
-        write(pipe_fd[i][1], &umbral_binarizacion, sizeof(umbral_binarizacion));
-        close(pipe_fd[i][1]); // Cerrar el extremo de escritura del pipe
     }
 
+/*
 
     // Esperar a que todos los workers terminen y recoger resultados
     for (int i = 0; i < cantidad_workers; i++) {

@@ -1,14 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include"Bmp.h"
+#include"Filtros.h"
 
 int main(int argc, char *argv[]) {
     
-    int columna_inicial, num_columnas;
+    int id_worker = atoi(argv[1]);
+    int id_envio = atoi(argv[2]);
+    int id_lectura = atoi(argv[3]);
+
+    int cantidad_workers, cantidad_filtros;
+    double factor_saturacion;
+    double umbral_binarizacion;
+    BMPImage* image;
+
+    image = (BMPImage*)malloc(sizeof(BMPImage));
+
+    char nombre_imagen[400];
+
+    read(id_lectura, &cantidad_workers, sizeof(cantidad_workers));
+    read(id_lectura, &cantidad_filtros, sizeof(cantidad_filtros));
+    read(id_lectura, &factor_saturacion, sizeof(factor_saturacion));
+    read(id_lectura, &umbral_binarizacion, sizeof(umbral_binarizacion));
+    read(id_lectura, image, sizeof(BMPImage));
     
-    read(STDIN_FILENO, &columna_inicial, sizeof(columna_inicial))
-    read(STDIN_FILENO, &num_columnas, sizeof(num_columnas))
+    int total_columns = image->width;
+    int columns_per_worker = total_columns / cantidad_workers;
+    int start_column = id_worker-1 * columns_per_worker;
+    int end_column = (id_worker == cantidad_workers) ? total_columns - start_column : start_column + columns_per_worker;
+
+    int num_columns = end_column - start_column;
+
+    RGBPixel *section_data = (RGBPixel *)malloc(image->height * num_columns * sizeof(RGBPixel));
+
+    get_worker_image_section(image, section_data, id_worker, cantidad_workers);
+
+    printf("ID WORKER: %d \n Cantidad de workers son %d\n", id_worker, cantidad_workers);
+    
+    char *nombre_carpeta = "test";
+    make_folder(nombre_carpeta);
+
+    sprintf(nombre_imagen, "%s/a_Saturated.bmp", nombre_carpeta);
+        //Aplicamos filtro de saturacion primero
+        BMPImage* new_image = saturate_bmp(image, factor_saturacion);
+        write_bmp(nombre_imagen, new_image);
     /* ej
     columna inicial 0
     n colum 10
@@ -17,7 +52,7 @@ int main(int argc, char *argv[]) {
     
     // Leer la matriz desde el pipe (stdin)
 
-    BMPImage* image;
+    /*BMPImage* image;
     read(STDIN_FILENO, image, sizeof(image));
     
     //FOR PARA CORTAR IMAGE EN COLUMNAS A LEER
@@ -30,5 +65,6 @@ int main(int argc, char *argv[]) {
 
 
     write(STDOUT_FILENO, new_image_binarizada, sizeof(new_image_saturada));
+    */
     return 0;
 }

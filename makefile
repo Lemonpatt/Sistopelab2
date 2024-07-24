@@ -1,4 +1,4 @@
-all: Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o lab1 broker
+all: Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o lab2 broker worker
 
 Crear_archivos.o: Crear_archivos.c Crear_archivos.h
 			g++ -g -c Crear_archivos.c
@@ -15,11 +15,15 @@ fbroker.o: fbroker.c fbroker.h
 fworker.o: fworker.c fworker.h
 			g++ -g -c fworker.c
 
-lab1: Crear_archivos.o Bmp.o Filtros.o fbroker.o fbroker.o lab1.c
-	g++ -g Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o lab1.c -o lab1
+lab2: Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o lab2.c
+	g++ -g Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o lab2.c -o lab2
 
-broker: broker.c
-	gcc broker.c -o broker
+broker: Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o broker.c
+	g++ -g Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o broker.c -o broker
+
+worker: Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o worker.c
+	g++ -g Crear_archivos.o Bmp.o Filtros.o fbroker.o fworker.o worker.c -o worker
+
 clean:
-	rm -f *.o Crear_archivos Bmp Filtros fbroker fworker lab1 broker
+	rm -f *.o Crear_archivos Bmp Filtros fbroker fworker lab2 broker worker
 

@@ -1,14 +1,15 @@
 #include "fworker.h"
 
 
-void create_worker(int pipe_fdw[2], int id_worker) {
+void create_worker(int pipe_fdw[2], int pipe_fdb[2], int id_worker) {
     if (fork() == 0) {
-
-        int envio = dup(pipe_fdw[1]);
+        
         close(pipe_fdw[1]);
+        close(pipe_fdb[0]);
+        int envio = dup(pipe_fdb[1]);
+        close(pipe_fdb[1]);
         int lectura = dup(pipe_fdw[0]); // Redirigir stdin para leer desde el pipe
         close(pipe_fdw[0]);
-
         char id_worker_str[100];
         snprintf(id_worker_str, sizeof(id_worker_str), "%d", id_worker);
 
@@ -23,34 +24,87 @@ void create_worker(int pipe_fdw[2], int id_worker) {
     }
 }
 
-BMPImage* get_worker_image_section(BMPImage* image, int id_worker, int cantidad_workers) {
-    int total_columns = image->width;
-    int columns_per_worker = total_columns / cantidad_workers;
-    int start_column = (id_worker-1) * columns_per_worker;
-    int end_column = (id_worker == cantidad_workers) ? total_columns : start_column + columns_per_worker;
+BMPImage* create_image_worker(int id_lectura) {
 
-    int num_columns = end_column - start_column;
+    BMPImage* image = (BMPImage*)malloc(sizeof(BMPImage));
 
+    read(id_lectura, &image->width, sizeof(int));
+    read(id_lectura, &image->height, sizeof(int));
 
-    BMPImage* new_image = (BMPImage*)malloc(sizeof(BMPImage));
-    new_image->width = image->width;
-    new_image->height = image->height;
-    new_image->data[image->width * image->height];
+    image->data = (RGBPixel*)malloc(sizeof(RGBPixel) * image->width * image->height);
 
-    printf("DEBE SER LA MISMA WIDTH PERO PASADA A COLUMNAS: %d \n", num_columns);
     // Copy the relevant data from the original image to the section
     for (int y = 0; y < image->height; y++) {
         for (int x = 0; x < image->width; x++) {
-            RGBPixel pixel = image->data[y * image->width + x];
-            unsigned char pixelGrey = pixel.r * 0.3 + pixel.g * 0.59 + pixel.b* 0.11;
-            pixel.r = (unsigned char)(pixelGrey);
-            pixel.g = (unsigned char)(pixelGrey);
-            pixel.b = (unsigned char)(pixelGrey);
-            new_image->data[y * image->width + x] = pixel;
+            RGBPixel pixel;
+            read(id_lectura, &pixel.r, sizeof(unsigned char));
+            read(id_lectura, &pixel.g, sizeof(unsigned char));
+            read(id_lectura, &pixel.b, sizeof(unsigned char));
+            image->data[y * image->width + x] = pixel;
+        }
+    }
+    return image;
+}
+
+
+/*
+void aplicar_filtros(BMPImage* image, int id_worker, int cantidad_filtros, double factor_saturacion, double umbral_binarizacion, BMPImage* resultados_filtros[]){
+
+
+    //Aplicamos filtro de saturacion primero
+    BMPImage* new_image = saturate_bmp(image, factor_saturacion);
+
+    resultados_filtros[0] = new_image;
+    write_bmp("worker_saturado.bmp", resultados_filtros[0]);
+
+    //Revisamos si se hacen los siguientes filtros
+    if (cantidad_filtros > 1){
+
+        //Se aplica filtro de grises
+        BMPImage* new_imageG = greyScale_bmp(image);
+        resultados_filtros[1] = new_imageG;
+        write_bmp("worker_gris.bmp", resultados_filtros[1]);
+
+            if (cantidad_filtros == 3){
+
+                //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
+
+                BMPImage* new_imageB = Binarizar_bmp(new_imageG, umbral_binarizacion);
+                resultados_filtros[2] = new_imageB;
+                write_bmp("worker_binario.bmp", resultados_filtros[2]);
+
+                //Liberamos el espacio
+                free_bmp(new_imageB);
+            }
+            //Liberamos el espacio
+            free_bmp(new_imageG);
 
         }
 
-    }
-    printf("Start column: %d, End column: %d\n", start_column, end_column);
-    return new_image;
+        //Liberamos el espacio
+        free_bmp(image);
+        free_bmp(new_image);
+
+
 }
+
+void enviar_resultados(int id_envio, BMPImage* resultados_filtros[], int cantidad_filtros){
+
+    for(int i = 0; i < cantidad_filtros; i++){
+
+        for (int y = 0; y < resultados_filtros[i]->height; y++) {
+            for (int x = 0; x < resultados_filtros[i]->width; x++) {
+                RGBPixel pixel = resultados_filtros[i]->data[y * resultados_filtros[i]->width + x];
+                write(id_envio, &pixel.r, sizeof(unsigned char));
+                write(id_envio, &pixel.g, sizeof(unsigned char));
+                write(id_envio, &pixel.b, sizeof(unsigned char));
+                printf("WORKER pixel %dx%d, r: %d g: %d, b: %d\n", x, y, pixel.r, pixel.g, pixel.b);
+            }
+        }
+    int new_fd = dup(id_envio);
+    close(id_envio);
+    id_envio = new_fd;
+    }
+    close(id_envio);
+}
+*/

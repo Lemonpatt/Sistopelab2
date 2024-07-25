@@ -42,7 +42,6 @@ typedef struct {
     RGBPixel *data; // Puntero a los píxeles de la imagen
 } BMPImage;
 
-
 BMPImage* read_bmp(const char* filename);
 
 void free_bmp(BMPImage* image);

@@ -12,24 +12,25 @@ int main(int argc, char *argv[]) {
     int cantidad_workers, cantidad_filtros;
     double factor_saturacion;
     double umbral_binarizacion;
-    BMPImage* image;
-    close(id_envio);
-    image = (BMPImage*)malloc(sizeof(BMPImage));
+    RGBPixel pixel;
 
     char nombre_imagen[400];
-
-    read(id_lectura, &cantidad_workers, sizeof(cantidad_workers));
-    read(id_lectura, &cantidad_filtros, sizeof(cantidad_filtros));
-    read(id_lectura, &factor_saturacion, sizeof(factor_saturacion));
-    read(id_lectura, &umbral_binarizacion, sizeof(umbral_binarizacion));
-
     
-    read(id_lectura, image, sizeof(image));
+    read(id_lectura, &cantidad_workers, sizeof(int));
+    read(id_lectura, &cantidad_filtros, sizeof(int));
+    read(id_lectura, &factor_saturacion, sizeof(double));
+    read(id_lectura, &umbral_binarizacion, sizeof(double));
     
-    close(id_lectura);
+    BMPImage* image = create_image_worker(id_lectura);
     printf("image dimensions: %dx%d \n", image->width, image->height);
     write_bmp("testWORKER.bmp", image);
     free_bmp(image);
+    
+    int b = 1;
+    write(id_envio, &b, sizeof(b));
+    
+    close(id_lectura);
+    close(id_envio);
     //BMPImage* new_image = get_worker_image_section(image, id_worker, cantidad_workers);
 /*
     

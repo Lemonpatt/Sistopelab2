@@ -7,7 +7,6 @@ void create_broker(int pipe_fd[2], int cantidad_workers) {
         int envio = dup(pipe_fd[1]);
         close(pipe_fd[1]);
         int lectura = dup(pipe_fd[0]); // Redirigir stdin para leer desde el pipe
-        close(pipe_fd[0]);
 
         //Pasamos la cantidad de trabajadores a un string para pasarlo por execl
         char cantidad_workers_str[100];

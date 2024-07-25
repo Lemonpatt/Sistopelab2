@@ -196,10 +196,10 @@ int main(int argc, char *argv[]) {
     close(pipe_fd[0]);
 
     //Escribimos los parametros a el broker en el pipe______________________________________________________
-    write(pipe_fd[1], &cantidad_imagenes, sizeof(cantidad_imagenes));
-    write(pipe_fd[1], &cantidad_filtros, sizeof(cantidad_filtros));
-    write(pipe_fd[1], &factor_saturacion, sizeof(factor_saturacion));
-    write(pipe_fd[1], &umbral_binarizacion, sizeof(umbral_binarizacion));
+    write(pipe_fd[1], &cantidad_imagenes, sizeof(int));
+    write(pipe_fd[1], &cantidad_filtros, sizeof(int));
+    write(pipe_fd[1], &factor_saturacion, sizeof(double));
+    write(pipe_fd[1], &umbral_binarizacion, sizeof(double));
 
     for (int i = 0; cantidad_imagenes > i; i++){
         char nombre_imagen[400];
@@ -225,7 +225,6 @@ int main(int argc, char *argv[]) {
                 //printf("IMAGEN: %s. MAIN pixel %dx%d, r: %d g: %d, b: %d\n", nombre_imagen, x, y, pixel.r, pixel.g, pixel.b);
             }
         }
-        //close(pipe_fd[1]); //FUNCIONO LA PRIMERA IMAGEN!!
         free_bmp(image);
     }  
     close(pipe_fd[1]);

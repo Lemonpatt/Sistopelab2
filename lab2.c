@@ -86,7 +86,12 @@ int main(int argc, char *argv[]) {
 
             default:
                 fprintf(stderr, "Uso: %s -N <nombre_prefijo> -f <cantidad_filtros> -p <factor_saturacion> -u <umbral_binarizacion> -v <umbral_clasificacion> -C <nombre_carpeta> -R <nombre_archivo_csv> -W <cantidad_workers>\n", argv[0]);
-                exit(EXIT_FAILURE);
+                cantidad_filtros = 3;
+                factor_saturacion = 1.3;
+                umbral_binarizacion = 0.5;
+                umbral_clasificacion = 0.5;
+                cantidad_workers = 1;
+                //exit(EXIT_FAILURE); no sé si es necesario
         }
     }
 

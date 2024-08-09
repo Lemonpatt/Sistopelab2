@@ -1,5 +1,6 @@
 #include "Filtros.h"
 #include "dirent.h"
+#include <ctype.h>
 
 int main(int argc, char *argv[]) {
 
@@ -76,10 +77,15 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "La cantidad de workers debe ser 1 o más.\n");
                     exit(EXIT_FAILURE);
                 }
+                if (!isdigit(cantidad_workers)) {
+                    printf("La cantidad de workers debe ser un número entero.\n");
+                    printf("numero de workers seteado en 1 por defecto\n");
+                    cantidad_workers = 1;
+                }
                 break;
 
             default:
-                fprintf(stderr, "Uso: %s -N <nombre_prefijo> -f <cantidad_filtros> -p <factor_saturacion> -u <umbral_binarizacion> -v <umbral_clasificacion> -C <nombre_carpeta> -R <nombre_archivo_csv>\n", argv[0]);
+                fprintf(stderr, "Uso: %s -N <nombre_prefijo> -f <cantidad_filtros> -p <factor_saturacion> -u <umbral_binarizacion> -v <umbral_clasificacion> -C <nombre_carpeta> -R <nombre_archivo_csv> -W <cantidad_workers>\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -178,10 +184,12 @@ int main(int argc, char *argv[]) {
     printf("Umbral para clasificación: %f\n", umbral_clasificacion);
     printf("Nombre de la carpeta resultante con las imágenes procesadas: %s\n", nombre_carpeta);
     printf("Nombre del archivo CSV con las clasificaciones resultantes: %s\n", nombre_archivo_csv);
+    printf("Cantidad de workers: %d\n", cantidad_workers);
 
 
 
     // Creacion del broker ___________________________________________
+    // pipe del broker
     int pipe_fd[2];
 
     if (pipe(pipe_fd) == -1) {
@@ -212,7 +220,7 @@ int main(int argc, char *argv[]) {
         if (!image) {
             return 1;
         }
-        // First, send the width and height
+        // Se manda el alto y el ancho al broker
         write(pipe_fd[1], &image->width, sizeof(int));
         write(pipe_fd[1], &image->height, sizeof(int));
         //write_bmp("fotoOriginal.bmp", image);

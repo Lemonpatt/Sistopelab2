@@ -1,6 +1,7 @@
 #include "fbroker.h"
 
 //test
+
 void create_broker(int pipe_fd[2], int cantidad_workers) {
     if (fork() == 0) {
         
@@ -25,7 +26,7 @@ void create_broker(int pipe_fd[2], int cantidad_workers) {
 }
 
 
-// Función para reconstruir la imagen BMP a partir de los resultados de los workers
+
 void reconstruct_image(BMPImage* original_image, BMPImage** results, int num_workers) {
     int columna_actual = 0;
     // Recorrer cada worker

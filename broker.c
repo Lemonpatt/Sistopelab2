@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         id_lectura = new_fd;
         i++;
     }
-/*
+
 
 
     BMPImage** results[cantidad_workers];
@@ -112,7 +112,13 @@ int main(int argc, char *argv[]) {
     }
 
     // Reconstruir imagen, se debe recibir basado en la cantidad de filtros cuantas veces se reconstruye la imagen
+    for (int i = 0; i < cantidad_filtros; i++) {
+        reconstruct_image(image, results, cantidad_workers);
+    }
 
-*/
+    //enviar La o las imagenes al main
+    write(id_envio, &image->width, sizeof(int));
+
+
     return 0; 
 }

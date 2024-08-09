@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     if (nombre_prefijo == NULL){
         fprintf(stderr, "Debe incluir el prefijo de las imagenes a procesar (-N).\n");
         exit(EXIT_FAILURE);   
-    
+        
     }
 
     if (cantidad_workers == 0){

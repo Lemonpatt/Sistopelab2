@@ -47,6 +47,68 @@ BMPImage* create_image_worker(int id_lectura) {
 }
 
 
+//actualmente el id_worker no se está usando, 
+void aplicar_filtros(BMPImage* image, int id_worker, int cantidad_filtros, double factor_saturacion, double umbral_binarizacion, BMPImage* resultados_filtros[]){
+    //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
+        sprintf(nombre_imagen, "%s/%s_Saturated.bmp", nombre_carpeta, nombre_imagenes[i]);
+        //Aplicamos filtro de saturacion primero
+        BMPImage* new_image = saturate_bmp(image, factor_saturacion);
+        write_bmp(nombre_imagen, new_image);
+
+        //Se abre en modo de adicion el archivo csv
+        csv = fopen(nombre_archivo_csv, "a");
+
+        //Revisamos si se hacen los siguientes filtros
+        if (cantidad_filtros > 1){
+            //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
+            sprintf(nombre_imagen, "%s/%s_Gris.bmp", nombre_carpeta, nombre_imagenes[i]);
+            //Se aplica filtro de grises
+            BMPImage* new_imageG = greyScale_bmp(image);
+            write_bmp(nombre_imagen, new_imageG);
+
+            if (cantidad_filtros == 3){
+
+                //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
+                sprintf(nombre_imagen, "%s/%s_Binario.bmp", nombre_carpeta, nombre_imagenes[i]);
+                //Se binariza la imagen de grises
+                BMPImage* new_imageB = Binarizar_bmp(new_imageG, umbral_binarizacion);
+                write_bmp(nombre_imagen, new_imageB);
+
+                //Si se llegó hasta aca, quiere decir que se debe aplicar la funcion nearly_black aqui
+                resultadoNB = nearly_black(new_imageB, umbral_clasificacion);
+                fprintf(csv, "%s-Binarizada; %d\n", nombre_imagenes[i], resultadoNB);
+                //Cerramos csv para que no se realice nearly_black con las otras imagenes filtradas
+                csv = NULL;
+                //Liberamos el espacio
+                free_bmp(new_imageB);
+            }
+            //Se ve nearly black solo si no se ha hecho todavia
+            if (csv != NULL){
+                resultadoNB = nearly_black(new_imageG, umbral_clasificacion);
+                fprintf(csv, "%s-Gris; %d\n", nombre_imagenes[i], resultadoNB);
+                csv = NULL;
+            }
+            //Liberamos el espacio
+            free_bmp(new_imageG);
+
+        }
+        //Se ve nearly black solo si no se ha hecho todavia
+        if (csv != NULL){
+            resultadoNB = nearly_black(new_image, umbral_clasificacion);
+            fprintf(csv, "%s-Saturada; %d\n", nombre_imagenes[i], resultadoNB);
+            csv = NULL;
+        }
+        //Liberamos el espacio
+        free_bmp(image);
+        free_bmp(new_image);
+
+        //Se aumenta el contador
+        i++;
+
+    }
+}
+
+
 /*
 void aplicar_filtros(BMPImage* image, int id_worker, int cantidad_filtros, double factor_saturacion, double umbral_binarizacion, BMPImage* resultados_filtros[]){
 

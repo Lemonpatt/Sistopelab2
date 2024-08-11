@@ -1,6 +1,5 @@
-#include "Filtros.h"
+#include "fbroker.h"
 #include "dirent.h"
-#include <ctype.h>
 
 int main(int argc, char *argv[]) {
 
@@ -13,7 +12,7 @@ int main(int argc, char *argv[]) {
     double umbral_clasificacion = -1.0;
     char *nombre_carpeta = NULL;
     char *nombre_archivo_csv = NULL;
-    int cantidad_workers = 0;
+    int cantidad_workers = 1;
     int opt;
     int cantidad_imagenes = 0;
 
@@ -77,21 +76,11 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "La cantidad de workers debe ser 1 o más.\n");
                     exit(EXIT_FAILURE);
                 }
-                if (!isdigit(cantidad_workers)) {
-                    printf("La cantidad de workers debe ser un número entero.\n");
-                    printf("numero de workers seteado en 1 por defecto\n");
-                    cantidad_workers = 1;
-                }
                 break;
 
             default:
-                fprintf(stderr, "Uso: %s -N <nombre_prefijo> -f <cantidad_filtros> -p <factor_saturacion> -u <umbral_binarizacion> -v <umbral_clasificacion> -C <nombre_carpeta> -R <nombre_archivo_csv> -W <cantidad_workers>\n", argv[0]);
-                cantidad_filtros = 3;
-                factor_saturacion = 1.3;
-                umbral_binarizacion = 0.5;
-                umbral_clasificacion = 0.5;
-                cantidad_workers = 1;
-                //exit(EXIT_FAILURE); no sé si es necesario
+                fprintf(stderr, "Uso: %s -N <nombre_prefijo> -f <cantidad_filtros> -p <factor_saturacion> -u <umbral_binarizacion> -v <umbral_clasificacion> -C <nombre_carpeta> -R <nombre_archivo_csv>\n", argv[0]);
+                exit(EXIT_FAILURE);
         }
     }
 
@@ -99,11 +88,11 @@ int main(int argc, char *argv[]) {
     if (nombre_prefijo == NULL){
         fprintf(stderr, "Debe incluir el prefijo de las imagenes a procesar (-N).\n");
         exit(EXIT_FAILURE);   
-        
+    
     }
 
-    if (cantidad_workers == 0){
-        fprintf(stderr, "Se debe incluir la cantidad de workers.\n");
+    if (cantidad_workers < 1){
+        fprintf(stderr, "Se debe dar una cantidad valida de workers.\n");
         exit(EXIT_FAILURE);   
     
     }
@@ -189,81 +178,41 @@ int main(int argc, char *argv[]) {
     printf("Umbral para clasificación: %f\n", umbral_clasificacion);
     printf("Nombre de la carpeta resultante con las imágenes procesadas: %s\n", nombre_carpeta);
     printf("Nombre del archivo CSV con las clasificaciones resultantes: %s\n", nombre_archivo_csv);
-    printf("Cantidad de workers: %d\n", cantidad_workers);
 
 
 
     // Creacion del broker ___________________________________________
-    // pipe del broker
-    int pipe_fd[2];
 
-    if (pipe(pipe_fd) == -1) {
+    //Pipes comunicacion broker y padre
+    int pipe_fdb[2];
+    int pipe_fdp[2];
+    if (pipe(pipe_fdb) == -1 ||pipe(pipe_fdp) == -1 ) {
         perror("pipe");
         exit(1);
     }
 
-    create_broker(pipe_fd, cantidad_workers);
+    create_broker(pipe_fdb, pipe_fdp, cantidad_workers);
 
     // Creacion del broker fin ___________________________________________
 
-    close(pipe_fd[0]);
 
     //Escribimos los parametros a el broker en el pipe______________________________________________________
-    write(pipe_fd[1], &cantidad_imagenes, sizeof(int));
-    write(pipe_fd[1], &cantidad_filtros, sizeof(int));
-    write(pipe_fd[1], &factor_saturacion, sizeof(double));
-    write(pipe_fd[1], &umbral_binarizacion, sizeof(double));
+    write(pipe_fdb[1], &cantidad_imagenes, sizeof(int));
+    write(pipe_fdb[1], &cantidad_filtros, sizeof(int));
+    write(pipe_fdb[1], &factor_saturacion, sizeof(double));
+    write(pipe_fdb[1], &umbral_binarizacion, sizeof(double));
 
-    for (int i = 0; cantidad_imagenes > i; i++){
-        char nombre_imagen[400];
-        sprintf(nombre_imagen, "%s.bmp", nombre_imagenes[i]);
-        
-        printf("Imagen siendo procesada: %s\n", nombre_imagen);
+    BMPImage* image_S, *image_G, *image_B;
 
-        //Leemos la imagen
-        BMPImage* image = read_bmp(nombre_imagen);
-        if (!image) {
-            return 1;
-        }
-        // Se manda el alto y el ancho al broker
-        write(pipe_fd[1], &image->width, sizeof(int));
-        write(pipe_fd[1], &image->height, sizeof(int));
-        //write_bmp("fotoOriginal.bmp", image);
-        for (int y = 0; y < image->height; y++) {
-            for (int x = 0; x < image->width; x++) {
-                RGBPixel pixel = image->data[y * image->width + x];
-                write(pipe_fd[1], &pixel.r, sizeof(unsigned char));
-                write(pipe_fd[1], &pixel.g, sizeof(unsigned char));
-                write(pipe_fd[1], &pixel.b, sizeof(unsigned char));
-                //printf("IMAGEN: %s. MAIN pixel %dx%d, r: %d g: %d, b: %d\n", nombre_imagen, x, y, pixel.r, pixel.g, pixel.b);
-            }
-        }
-        free_bmp(image);
-    }  
-    close(pipe_fd[1]);
- // Cerrar el extremo de escritura del pipe 
-    //Escribimos los parametros a el broker en el pipe______________________________________________________
-
-
-    //Se leen los resultados del broker con la imagen individual junta para imprimirla y evaluarla
-    //read(pipe_fd[0], algo, sizeof(cantidad_imagenes));
-
-    //A continuacion se debería hacer la carpeta y el csv, hacer la prueba e imprimir las imagenes desde los resultados del broker,
-    // read foto binarizada, read foto gris, read foto saturada, dependiendo de la cantidad de filtros y hacer clasificacion
-
-        /*
     //Creamos la carpeta con los resultados y el archivo csv
     make_folder(nombre_carpeta);
     make_csv(nombre_archivo_csv, umbral_clasificacion);
 
-
-    
-    int i = 0;
     FILE *csv = NULL;
     int resultadoNB;
-    while(cantidad_imagenes > i){
-        
-        // Arreglo para guardar los nuevos nombres de la imagen a leer y guardar
+
+    for (int i = 0; cantidad_imagenes > i; i++){
+
         char nombre_imagen[400];
         sprintf(nombre_imagen, "%s.bmp", nombre_imagenes[i]);
         
@@ -274,15 +223,53 @@ int main(int argc, char *argv[]) {
         if (!image) {
             return 1;
         }
+        // Enviamos los datos de la imagen al broker
+        write(pipe_fdb[1], &image->width, sizeof(int));
+        write(pipe_fdb[1], &image->height, sizeof(int));
+        
+        for (int y = 0; y < image->height; y++) {
+            for (int x = 0; x < image->width; x++) {
+                RGBPixel pixel = image->data[y * image->width + x];
+                write(pipe_fdb[1], &pixel.r, sizeof(unsigned char));
+                write(pipe_fdb[1], &pixel.g, sizeof(unsigned char));
+                write(pipe_fdb[1], &pixel.b, sizeof(unsigned char));
+                //printf("IMAGEN: %s. MAIN pixel %dx%d, r: %d g: %d, b: %d\n", nombre_imagen, x, y, pixel.r, pixel.g, pixel.b);
+            }
+        }
 
-        printf("Ancho de la imagen: %d\n", image->width);
-        printf("Alto de la imagen: %d\n", image->height);
+        image_S = (BMPImage*)malloc(sizeof(BMPImage));
+        image_S->height = image->height;
+        image_S->width = image->width;
+        image_S->data = (RGBPixel*)malloc(sizeof(RGBPixel) * image->width * image->height);
+
+        if (cantidad_filtros > 1){
+            image_G = (BMPImage*)malloc(sizeof(BMPImage));
+            image_G->height = image->height;
+            image_G->width = image->width;
+            image_G->data = (RGBPixel*)malloc(sizeof(RGBPixel) * image->width * image->height);
+
+            if(cantidad_filtros == 3){
+                image_B = (BMPImage*)malloc(sizeof(BMPImage));
+                image_B->height = image->height;
+                image_B->width = image->width;
+                image_B->data = (RGBPixel*)malloc(sizeof(RGBPixel) * image->width * image->height);
+            }
+        }
+        
+        for (int a = 0; a < image->height; a++){
+            for (int b = 0; b < image->width; b++) {
+                RGBPixel pixel;
+                read(pipe_fdp[0], &pixel.r, sizeof(unsigned char));
+                read(pipe_fdp[0], &pixel.g, sizeof(unsigned char));
+                read(pipe_fdp[0], &pixel.b, sizeof(unsigned char));
+                image_S->data[a * image->width + b] = pixel;
+            }
+        }
 
         //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
         sprintf(nombre_imagen, "%s/%s_Saturated.bmp", nombre_carpeta, nombre_imagenes[i]);
-        //Aplicamos filtro de saturacion primero
-        BMPImage* new_image = saturate_bmp(image, factor_saturacion);
-        write_bmp(nombre_imagen, new_image);
+
+        write_bmp(nombre_imagen, image_S);
 
         //Se abre en modo de adicion el archivo csv
         csv = fopen(nombre_archivo_csv, "a");
@@ -291,49 +278,65 @@ int main(int argc, char *argv[]) {
         if (cantidad_filtros > 1){
             //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
             sprintf(nombre_imagen, "%s/%s_Gris.bmp", nombre_carpeta, nombre_imagenes[i]);
-            //Se aplica filtro de grises
-            BMPImage* new_imageG = greyScale_bmp(image);
-            write_bmp(nombre_imagen, new_imageG);
+
+            for (int a = 0; a < image->height; a++){
+                for (int b = 0; b < image->width; b++) {
+                    RGBPixel pixel;
+                    read(pipe_fdp[0], &pixel.r, sizeof(unsigned char));
+                    read(pipe_fdp[0], &pixel.g, sizeof(unsigned char));
+                    read(pipe_fdp[0], &pixel.b, sizeof(unsigned char));
+                    image_G->data[a * image->width + b] = pixel;
+                }
+            }
+
+            write_bmp(nombre_imagen, image_G);
 
             if (cantidad_filtros == 3){
 
                 //Otorgamos el filepath al nombre para escribirlo en la carpeta dada
                 sprintf(nombre_imagen, "%s/%s_Binario.bmp", nombre_carpeta, nombre_imagenes[i]);
-                //Se binariza la imagen de grises
-                BMPImage* new_imageB = Binarizar_bmp(new_imageG, umbral_binarizacion);
-                write_bmp(nombre_imagen, new_imageB);
+
+                for (int a = 0; a < image->height; a++){
+                    for (int b = 0; b < image->width; b++) {
+                        RGBPixel pixel;
+                        read(pipe_fdp[0], &pixel.r, sizeof(unsigned char));
+                        read(pipe_fdp[0], &pixel.g, sizeof(unsigned char));
+                        read(pipe_fdp[0], &pixel.b, sizeof(unsigned char));
+                        image_B->data[a * image->width + b] = pixel;
+                    }
+                }
+
+                write_bmp(nombre_imagen, image_B);
 
                 //Si se llegó hasta aca, quiere decir que se debe aplicar la funcion nearly_black aqui
-                resultadoNB = nearly_black(new_imageB, umbral_clasificacion);
+                resultadoNB = nearly_black(image_B, umbral_clasificacion);
                 fprintf(csv, "%s-Binarizada; %d\n", nombre_imagenes[i], resultadoNB);
                 //Cerramos csv para que no se realice nearly_black con las otras imagenes filtradas
                 csv = NULL;
-                //Liberamos el espacio
-                free_bmp(new_imageB);
             }
             //Se ve nearly black solo si no se ha hecho todavia
             if (csv != NULL){
-                resultadoNB = nearly_black(new_imageG, umbral_clasificacion);
+                resultadoNB = nearly_black(image_G, umbral_clasificacion);
                 fprintf(csv, "%s-Gris; %d\n", nombre_imagenes[i], resultadoNB);
                 csv = NULL;
             }
-            //Liberamos el espacio
-            free_bmp(new_imageG);
 
         }
         //Se ve nearly black solo si no se ha hecho todavia
         if (csv != NULL){
-            resultadoNB = nearly_black(new_image, umbral_clasificacion);
+            resultadoNB = nearly_black(image_S, umbral_clasificacion);
             fprintf(csv, "%s-Saturada; %d\n", nombre_imagenes[i], resultadoNB);
             csv = NULL;
         }
-        //Liberamos el espacio
+        //Liberamos las imagenes creadas y la original
         free_bmp(image);
-        free_bmp(new_image);
-
-        //Se aumenta el contador
-        i++;
-
-    }*/
+        free_bmp(image_S);
+        free_bmp(image_G);
+        free_bmp(image_B);
+    }
+    close(pipe_fdb[1]);
+    close(pipe_fdp[0]);
+    wait(NULL);
+    
     return 0;
 }

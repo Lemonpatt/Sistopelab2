@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include"Filtros.h"
+#include "fworker.h"
 
 int main(int argc, char *argv[]) {
     
@@ -21,17 +21,20 @@ int main(int argc, char *argv[]) {
     read(id_lectura, &factor_saturacion, sizeof(double));
     read(id_lectura, &umbral_binarizacion, sizeof(double));
     
+    BMPImage* resultados_filtros[cantidad_filtros];
+
     BMPImage* image = create_image_worker(id_lectura);
     printf("image dimensions: %dx%d \n", image->width, image->height);
-    write_bmp("testWORKER.bmp", image);
-    free_bmp(image);
-    
-    int b = 1;
-    write(id_envio, &b, sizeof(b));
-    
+
     close(id_lectura);
+
+    aplicar_filtros(image, id_worker, cantidad_filtros, factor_saturacion, umbral_binarizacion, resultados_filtros);
+
+
+    enviar_resultados(id_envio, resultados_filtros, cantidad_filtros);
     close(id_envio);
-    //BMPImage* new_image = get_worker_image_section(image, id_worker, cantidad_workers);
+
+    free_bmp(image);
 /*
     
     char *nombre_carpeta = "test";

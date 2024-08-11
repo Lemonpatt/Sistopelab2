@@ -42,18 +42,9 @@ typedef struct {
     RGBPixel *data; // Puntero a los píxeles de la imagen
 } BMPImage;
 
-//Entradas: Char* (nombre del archivo)
-//Salidas: BMPImage*(imagen formato BMP)
-//Descripción: Función que lee una imagen BMP y la guarda en un struct BMPImage
 BMPImage* read_bmp(const char* filename);
 
-//Entradas: BMPImage*(imagen formato BMP)
-//Salidas: void
-//Descripción: Función que libera la memoria de una imagen BMP
 void free_bmp(BMPImage* image);
 
-//Entradas: Char* (nombre del archivo), BMPImage*(imagen formato BMP)
-//Salidas: void
-//Descripción: Función que escribe una imagen BMP en un archivo
 void write_bmp(const char* filename, BMPImage* image);
 

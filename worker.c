@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     close(id_lectura);
 
-    aplicar_filtros(image, id_worker, cantidad_filtros, factor_saturacion, umbral_binarizacion, resultados_filtros);
+    aplicar_filtros(image,cantidad_filtros, factor_saturacion, umbral_binarizacion, resultados_filtros);
 
 
     enviar_resultados(id_envio, resultados_filtros, cantidad_filtros);

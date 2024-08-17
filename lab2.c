@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
     int cantidad_workers = 1;
     int opt;
     int cantidad_imagenes = 0;
+    char *endptr;
 
 
     // Procesar las opciones de línea de comandos
@@ -37,9 +38,10 @@ int main(int argc, char *argv[]) {
             case 'p':
                 factor_saturacion = atof(optarg);
 
-                // Se revisa que el número entregado sea válido (Aqui se eligió que sea positivo)
-                if (factor_saturacion < 0.0) {
-                    fprintf(stderr, "El factor de saturación debe ser positivo.\n");
+                // Se revisa que el número entregado sea válido (Aqui se eligió que sea mayor que 0)
+                if (factor_saturacion <= 0.0) {
+                    fprintf(stderr, "Factor de saturacion no valido.\n");
+                    fprintf(stderr, "El factor de saturacion debe ser un número mayor que 0.\n");
                     exit(EXIT_FAILURE);
                 }
                 break;
@@ -192,8 +194,6 @@ int main(int argc, char *argv[]) {
     }
 
     create_broker(pipe_fdb, pipe_fdp, cantidad_workers);
-
-    // Creacion del broker fin ___________________________________________
 
 
     //Escribimos los parametros a el broker en el pipe______________________________________________________

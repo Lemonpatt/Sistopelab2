@@ -3,15 +3,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "fbroker.h"
-/*
-para unir la imagen crear una matriz de tamaño:
-image width x image height e irla rellenando con las partres de la imagen de los workers
-*/
-
 
 int main(int argc, char *argv[]) {
-
-
 
     //Crear en el main un execl de broker que reciba la cantidad de workers a crear
     int cantidad_workers = atoi(argv[1]);
@@ -29,7 +22,7 @@ int main(int argc, char *argv[]) {
     RGBPixel pixel;
     BMPImage* image_S, *image_G, *image_B;
 
-    // Leer parámetros desde stdin seguramente pasar a funcion a parte despues
+    // se leen los parametros necesarios
     read(id_lectura, &cantidad_imagenes, sizeof(int));
     read(id_lectura, &cantidad_filtros, sizeof(int));
     read(id_lectura, &factor_saturacion, sizeof(double));
@@ -71,7 +64,7 @@ int main(int argc, char *argv[]) {
         }
 
 
-        // Crear pipes y procesos workers
+        // Se crean los pipes y workers
         for (int j = 0; j < cantidad_workers; j++) {
 
             if (pipe(pipe_fdw[j]) == -1 || pipe(pipe_fdb[j]) == -1) {
@@ -173,17 +166,5 @@ int main(int argc, char *argv[]) {
     }
     close(id_lectura);
     close(id_envio);
-/*
-
-
-    BMPImage** results[cantidad_workers];
-    for (int i = 0; i < cantidad_workers; i++) {
-        read(pipe_fd[i][0], results[i], sizeof(results[i]));
-        close(pipe_fd[i][0]);
-    }
-
-    // Reconstruir imagen, se debe recibir basado en la cantidad de filtros cuantas veces se reconstruye la imagen
-
-*/
     return 0; 
 }

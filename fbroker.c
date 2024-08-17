@@ -3,7 +3,6 @@
 
 void create_broker(int pipe_fdb[2], int pipe_fdp[2], int cantidad_workers) {
     if (fork() == 0) {
-        
         close(pipe_fdb[1]);
         close(pipe_fdp[0]);
         int envio = dup(pipe_fdp[1]);
@@ -19,17 +18,13 @@ void create_broker(int pipe_fdb[2], int pipe_fdp[2], int cantidad_workers) {
         char num_lectura[100];
         snprintf(num_lectura, sizeof(num_lectura), "%d", lectura);
 
-
         execl("./broker", "broker", cantidad_workers_str, num_envio, num_lectura, NULL); // Ejecutar el worker
         perror("execl");
         exit(1);
     }
 }
 
-
-// Función para reconstruir la imagen BMP a partir de los resultados de los workers
 void send_image(BMPImage* image, int id_envio) {
-
     for (int y = 0; y < image->height; y++) {
         for (int x = 0; x < image->width; x++) {
             RGBPixel pixel = image->data[y * image->width + x];

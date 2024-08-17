@@ -50,7 +50,7 @@ BMPImage* create_image_worker(int id_lectura) {
 //Entradas: image, id_worker, cantidad_filtros, factor_saturacion, umbral_binarizacion, resultados_filtros[]
 //Salidas: void
 //Descripción: Función que aplica los filtros a una imagen BMP y guarda en un arreglo las imagenes obtenidas
-void aplicar_filtros(BMPImage* image, int id_worker, int cantidad_filtros, double factor_saturacion, double umbral_binarizacion, BMPImage* resultados_filtros[]){
+void aplicar_filtros(BMPImage* image, int cantidad_filtros, double factor_saturacion, double umbral_binarizacion, BMPImage* resultados_filtros[]){
 
 
     //Aplicamos filtro de saturacion primero

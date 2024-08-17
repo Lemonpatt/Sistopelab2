@@ -1,14 +1,15 @@
 #include "fbroker.h"
 
-//test
-void create_broker(int pipe_fd[2], int cantidad_workers) {
+
+void create_broker(int pipe_fdb[2], int pipe_fdp[2], int cantidad_workers) {
     if (fork() == 0) {
         
-        int envio = dup(pipe_fd[1]);
-        close(pipe_fd[1]);
-        int lectura = dup(pipe_fd[0]); // Redirigir stdin para leer desde el pipe
-        close(pipe_fd[0]);
-
+        close(pipe_fdb[1]);
+        close(pipe_fdp[0]);
+        int envio = dup(pipe_fdp[1]);
+        close(pipe_fdp[1]);
+        int lectura = dup(pipe_fdb[0]); // Redirigir stdin para leer desde el pipe
+        close(pipe_fdb[0]);
         //Pasamos la cantidad de trabajadores a un string para pasarlo por execl
         char cantidad_workers_str[100];
         snprintf(cantidad_workers_str, sizeof(cantidad_workers_str), "%d", cantidad_workers);
@@ -27,18 +28,15 @@ void create_broker(int pipe_fd[2], int cantidad_workers) {
 
 
 // Función para reconstruir la imagen BMP a partir de los resultados de los workers
-void reconstruct_image(BMPImage* original_image, BMPImage** results, int num_workers) {
-    int columna_actual = 0;
-    // Recorrer cada worker
-    for (int w = 0; w < num_workers; w++) {
-        int start_column = columna_actual;
-        int end_column = columna_actual + results[w]->width;
-        // Copiar los datos procesados de cada worker a la imagen original
-        for (int col = 0; col < results[w]->width; col++) {
-            for (int y = 0; y < original_image->height; y++) {
-                original_image->data[y * original_image->width + start_column + col] = results[w]->data[y * original_image->width + col];
-            }
+void send_image(BMPImage* image, int id_envio) {
+
+    for (int y = 0; y < image->height; y++) {
+        for (int x = 0; x < image->width; x++) {
+            RGBPixel pixel = image->data[y * image->width + x];
+            write(id_envio, &pixel.r, sizeof(unsigned char));
+            write(id_envio, &pixel.g, sizeof(unsigned char));
+            write(id_envio, &pixel.b, sizeof(unsigned char));
+            //printf("WORKER pixel %dx%d, r: %d g: %d, b: %d\n", x, y, pixel.r, pixel.g, pixel.b);
         }
-        columna_actual = end_column;
     }
 }

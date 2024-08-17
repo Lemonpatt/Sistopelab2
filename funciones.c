@@ -1,4 +1,4 @@
-#include"Filtros.h"
+#include"funciones.h"
 
 
 //Entradas: Recibe un puntero a una estructura BMPImage y un numero float( >= 0)

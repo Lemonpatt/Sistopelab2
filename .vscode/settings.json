@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "unistd.h": "c",
-        "fbroker.h": "c",
-        "filtros.h": "c",
-        "stdlib.h": "c",
-        "xiosbase": "c"
-    }
-}
